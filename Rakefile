@@ -13,16 +13,23 @@ require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
   gem.name = "resthome"
-  gem.homepage = "http://github.com/dougyouch/resthome"
+  gem.homepage = "http://github.com/cykod/resthome"
   gem.license = "MIT"
-  gem.summary = %Q{TODO: one-line summary of your gem}
-  gem.description = %Q{TODO: longer description of your gem}
+  gem.summary = %Q{RESTful web services consumer}
+  gem.description = %Q{Simple wrapper class generator for consuming RESTful web services}
   gem.email = "doug@cykod.com"
   gem.authors = ["Doug Youch"]
   # Include your dependencies below. Runtime dependencies are required when using your gem,
   # and development dependencies are only needed for development (ie running rake tasks, tests, etc)
   #  gem.add_runtime_dependency 'jabber4r', '> 0.1'
+  gem.add_runtime_dependency 'httparty', '>= 0'
   #  gem.add_development_dependency 'rspec', '> 1.2.3'
+  gem.add_development_dependency "bundler", "~> 1.0.0"
+  gem.add_development_dependency "jeweler", "~> 1.5.1"
+  gem.add_development_dependency "rcov", ">= 0"
+  gem.add_development_dependency "fakeweb", ">= 0"
+  gem.add_development_dependency "json", ">= 0"
+  gem.add_development_dependency "rspec", ">= 0"
 end
 Jeweler::RubygemsDotOrgTasks.new
 

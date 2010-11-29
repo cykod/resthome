@@ -1,5 +1,7 @@
 = RESTHome
 
+Simple wrapper class generator for consuming RESTful web services
+
 == RESTful Example
 
 RESTHome's are used to communicate to RESTful Web Services.

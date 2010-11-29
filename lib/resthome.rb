@@ -14,14 +14,15 @@ class RESTHome
 
   # Defines a web service route
   #
-  # name of the method to create
+  # === Arguments
+  # *name* of the method to create
   # name has special meaning.
-  # If starts with create or add the method will be set to post.
-  # If starts with edit or update the method will be set to put.
-  # If starts with delete the method will be set to delete.
-  # Else by default the method is get.
+  # * If starts with create or add the method will be set to POST.
+  # * If starts with edit or update the method will be set to PUT.
+  # * If starts with delete the method will be set to DELETE.
+  # * Else by default the method is GET.
   #
-  # path is the path to the web service
+  # *path* is the path to the web service
   #
   # === Options
   #
@@ -125,17 +126,39 @@ class RESTHome
     end
   end
 
+  # Adds a route to the current object
   def route(name, path, options={})
     self.class.route name, path, options.merge(:instance => self)
   end
 
   # Creates routes for a RESTful API
   #
-  # resource_name is the name of the items returned by the API
+  # *resource_name* is the name of the items returned by the API,
+  # *collection_name* is the plural name of the items,
+  # *base_path* is the path to the collection
   #
-  # collection_name is the plural name of the items
+  # Sets up 5 most common RESTful routes
   #
-  # base_path is the path to the collection
+  # Example
+  #  /customers.json GET list of customers, POST to create a customer
+  #  /customers/1.json GET a customers, PUT to edit a customer, DELETE to delete a customer
+  #  JSON response returns {'customer': {'id':1, 'name':'Joe', ...}}
+  #
+  # Setup the RESTful routes
+  #  rest :customer, :customers, '/customers.json'
+  #  # same as
+  #  route :customers, '/customers.json', :resource => :customer
+  #  route :create_customer, '/customers.json', :resource => :customer
+  #  route :customer, '/customers/:customer_id.json', :resource => :customer
+  #  route :edit_customer, '/customers/:customer_id.json', :resource => :customer
+  #  route :delete_customer, '/customers/:customer_id.json', :resource => :customer
+  #
+  # Following methods are created
+  #  customers # return an array of customers
+  #  create_customer :name => 'Smith' # returns {'id' => 2, 'name' => 'Smith'}
+  #  customer 1 # return data for customer 1
+  #  edit_customer 1, :name => 'Joesph'
+  #  delete_customer 1
   def self.rest(resource_name, collection_name, base_path, options={})
     options[:resource] ||= resource_name
     self.route collection_name, base_path, options
@@ -154,10 +177,13 @@ class RESTHome
   # This method should be overwritten as needed.
   def build_options!(options)
     options[:basic_auth] = self.basic_auth if self.basic_auth
-    options[:headers]['cookie'] = @cookies.to_a.collect{|c| "#{c[0]}=#{c[1]}"}.join('; ') + ';' if @cookies
+    if @cookies
+      options[:headers] ||= {}
+      options[:headers]['cookie'] = @cookies.to_a.collect{|c| "#{c[0]}=#{c[1]}"}.join('; ') + ';'
+    end
   end
 
-  # Makes the request using HTTParty. Save the method, path and options used.
+  # Makes the request using HTTParty. Saves the method, path and options used.
   def request(method, path, options)
     build_options! options
     url = build_url path
@@ -217,8 +243,13 @@ class RESTHome
   # Convenience method for saving all cookies by default called from parse_response!.
   def save_cookies!
     return unless @response.headers.to_hash['set-cookie']
+    save_cookies @response.headers.to_hash['set-cookie']
+  end
+
+  # Parse an array of Set-cookie headers
+  def save_cookies(data)
     @cookies ||= {}
-    @response.headers.to_hash['set-cookie'].collect { |cookie| cookie.split("\; ")[0].split('=') }.each do |c|
+    data.collect { |cookie| cookie.split("\; ")[0].split('=') }.each do |c|
       @cookies[c[0]] = c[1]
     end
   end

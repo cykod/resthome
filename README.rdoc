@@ -1,8 +1,67 @@
-= resthome
+= RESTHome
 
-Description goes here.
+== RESTful Example
 
-== Contributing to resthome
+RESTHome's are used to communicate to RESTful Web Services.
+
+Let's say you are working with B2B.dev. They provide a simple RESTful API for interacting with customer data.
+
+API looks like
+ GET    http://api.b2b.dev/customers.json      - list of your customers
+ GET    http://api.b2b.dev/customers/<id>.json - customer data
+ PUT    http://api.b2b.dev/customers/<id>.json - edit customer data
+ DELETE http://api.b2b.dev/customers/<id>.json - delete customer
+ POST   http://api.b2b.dev/customers.json      - create a new customer
+
+ JSON response looks like {'customer': {'id': 99, 'first_name': 'Joe', 'last_name': 'Smith'}}
+
+Create a simple RESTHome service to interact with B2B.dev api.
+
+ class B2BService < RESTHome
+   rest :customer, :customers, '/customers.json'
+
+   def initialize(api_key)
+     self.base_uri = 'http://api.b2b.dev'
+     self.basic_auth = {:username => api_key, :password => 'x'}
+   end
+ end
+
+ service = B2BService.new 'XXXXX'
+ service.customers # returns an array of customers
+ customer = service.customer 99 # returns the data for customer 99, i.e. {:first_name => 'Joe', :last_name => 'Smith'}
+ service.edit_customer 99, :first_name => 'Joesph', :last_name => 'Smithie' # edits customer 99
+ service.delete_customer 99 # deletes customer 99
+ service.create_customer :first_name => 'John', :last_name => 'Doe' # creates a new customer
+
+== Lorem Lipsum Example
+
+Create a simple lorem lipsum generator, using http://www.lipsum.com.
+
+ lipsum = RESTHome.new
+ lipsum.base_uri = 'http://www.lipsum.com'
+ lipsum.route :generate, '/feed/json', :method => :post
+ words = lipsum.generate(:what => 'words', :amount => 20) do |res|
+   res['feed']['lipsum']
+ end
+
+
+ class LoremLipsumService < RESTHome
+   route :generate, '/feed/json', :method => :post, :return => :parse_feed
+
+   def initialize
+     self.base_uri = 'http://www.lipsum.com'
+   end
+
+   def parse_feed(res)
+     res['feed']['lipsum']
+   end
+ end
+
+ service = LoremLipsumService.new
+ words = service.generate(:what => 'words', :amount => 20)
+
+
+== Contributing to RESTHome
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it

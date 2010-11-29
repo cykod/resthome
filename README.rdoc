@@ -75,6 +75,6 @@ Create a simple lorem lipsum generator, using http://www.lipsum.com.
 
 == Copyright
 
-Copyright (c) 2010 Doug Youch. See LICENSE.txt for
+Copyright (c) 2010 Cykod LLC. See LICENSE.txt for
 further details.
 

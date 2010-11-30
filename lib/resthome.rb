@@ -226,7 +226,7 @@ class RESTHome
     end
   end
 
-  def method_missing(method, *args) #:nodoc:
+  def method_missing(method, *args, &block) #:nodoc:
     if method.to_s =~ /^find_(.*?)_by_(.*)$/
       find_method = "find_#{$1}"
       find_args = $2.split '_and_'
@@ -241,9 +241,9 @@ class RESTHome
       if start > 0
         send_args = args[0..(start-1)]
         send_args << options
-        return self.send(find_method, *send_args)
+        return self.send(find_method, *send_args, &block)
       else
-        return self.send(find_method, options)
+        return self.send(find_method, options, &block)
       end
     else
       super

@@ -314,4 +314,57 @@ describe RESTHome do
     @service.request_url.should == 'http://test.dev/products.json'
     @service.request_options.should == {}    
   end
+
+  it "should be able to use blocks on the response" do
+    @service_class.route :products, '/products.json', :resource => 'product', :return => Proc.new { |res| res['name'] }
+    @service_class.method_defined?(:products).should be_true
+
+    @service = @service_class.new
+    @service.base_uri = 'http://test.dev'
+
+    fakeweb_response(:get, 'http://test.dev/products.json', 200,
+                     [{'product' => {'id' => 1, 'name' => 'Item1'}}, {'product' => {'id' => 2, 'name' => 'Item2'}}])
+    @names = @service.products
+
+    @names.should == ['Item1', 'Item2']
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/products.json'
+    @service.request_options.should == {}    
+  end
+
+  it "should be able to use blocks on the response" do
+    @service_class.route :products, '/products.json', :resource => 'product', :return => lambda { |res| res['name'] }
+    @service_class.method_defined?(:products).should be_true
+
+    @service = @service_class.new
+    @service.base_uri = 'http://test.dev'
+
+    fakeweb_response(:get, 'http://test.dev/products.json', 200,
+                     [{'product' => {'id' => 1, 'name' => 'Item1'}}, {'product' => {'id' => 2, 'name' => 'Item2'}}])
+    @names = @service.products
+
+    @names.should == ['Item1', 'Item2']
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/products.json'
+    @service.request_options.should == {}    
+  end
+
+  it "should be able to use blocks on the response" do
+    @service_class.route :products, '/products.json', :resource => 'product' do |res|
+      res['name']
+    end
+    @service_class.method_defined?(:products).should be_true
+
+    @service = @service_class.new
+    @service.base_uri = 'http://test.dev'
+
+    fakeweb_response(:get, 'http://test.dev/products.json', 200,
+                     [{'product' => {'id' => 1, 'name' => 'Item1'}}, {'product' => {'id' => 2, 'name' => 'Item2'}}])
+    @names = @service.products
+
+    @names.should == ['Item1', 'Item2']
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/products.json'
+    @service.request_options.should == {}    
+  end
 end

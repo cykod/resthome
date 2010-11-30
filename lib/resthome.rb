@@ -36,7 +36,7 @@ class RESTHome
   #   The name of the element to return from the response.
   # [:no_body]
   #   Removes the body argument from a post/put route
-  def self.route(name, path, options={})
+  def self.route(name, path, options={}, &block)
     args = path.scan /:[a-z_]+/
     function_args = args.collect{ |arg| arg[1..-1] }
 
@@ -101,8 +101,12 @@ class RESTHome
     end
 
     return_method = 'nil'
-    if options[:return].nil?
-      return_method = 'nil'
+    if options[:return].nil? || options[:return].is_a?(Proc)
+      block ||= options[:return]
+      if block
+        register_route_block name, block
+        return_method = "self.class.route_blocks['#{name}']"
+      end
     elsif options[:return].is_a?(Class)
       return_method = options[:return].to_s
     else
@@ -260,6 +264,20 @@ class RESTHome
     save_cookies!
   end
 
+  def self.route_blocks #:nodoc:
+    {}
+  end
+
+  def self.register_route_block(route, proc) #:nodoc:
+    blocks = self.route_blocks
+    blocks[route.to_s] = proc
+
+    sing = class << self; self; end
+    sing.send :define_method, :route_blocks do 
+      blocks
+    end 
+  end
+
   protected
 
   def _handle_response(response, opts={}, &block) #:nodoc:
@@ -277,6 +295,8 @@ class RESTHome
     if opts[:return]
       if opts[:return].is_a?(Class)
         obj = opts[:return].new obj
+      elsif opts[:return].is_a?(Proc)
+        obj = opts[:return].call obj
       else
         obj = send opts[:return], obj
       end

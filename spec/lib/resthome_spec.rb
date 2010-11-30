@@ -367,4 +367,41 @@ describe RESTHome do
     @service.request_url.should == 'http://test.dev/products.json'
     @service.request_options.should == {}    
   end
+
+  it "should be able to parse cookies" do
+    @service = RESTHome.new
+    @service.save_cookies [nil, '', "test=1111; path=/; expires=Sat, 30-Nov-2002 00:00:00 GMT", "dev=1", "missing="]
+    @service.cookies['test'].should == '1111'
+    @service.cookies['dev'].should == '1'
+    @service.cookies['missing'].should be_nil
+  end
+
+  it "should be able to setup default query parameters" do
+    @service_class.route :find_songs, '/songs.json', :query => {'search' => 'all'}
+    @service_class.method_defined?(:find_songs).should be_true
+
+    @service = @service_class.new
+    @service.base_uri = 'http://test.dev'
+
+    fakeweb_response(:get, 'http://test.dev/songs.json?search=all', 200, [])
+    @names = @service.find_songs
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/songs.json'
+    @service.request_options.should == {:query => {'search' => 'all'}}
+
+    fakeweb_response(:get, 'http://test.dev/songs.json?search=test', 200, [])
+    @names = @service.find_songs_by_search 'test'
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/songs.json'
+    @service.request_options.should == {:query => {'search' => 'test'}}
+
+    fakeweb_response(:get, 'http://test.dev/songs.json?search=test2', 200, [])
+    @names = @service.find_songs :query => {'search' => 'test2'}
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/songs.json'
+    @service.request_options.should == {:query => {'search' => 'test2'}}
+  end
 end

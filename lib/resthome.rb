@@ -31,11 +31,13 @@ class RESTHome
   # [:expected_status]
   #   Expected status code of the response, will raise InvalidResponse. Can be an array of codes.
   # [:return]
-  #   The method to call or the class to create before method returns.
+  #   The method to call, the class to create or a Proc to call before method returns.
   # [:resource]
   #   The name of the element to return from the response.
   # [:no_body]
   #   Removes the body argument from a post/put route
+  # [:query]
+  #   Default set of query arguments
   def self.route(name, path, options={}, &block)
     args = path.scan /:[a-z_]+/
     function_args = args.collect{ |arg| arg[1..-1] }
@@ -88,6 +90,10 @@ class RESTHome
           method_src << "options[:body] = body\n"
         end
       end
+    end
+
+    if options[:query]
+      method_src << "options[:query] = #{options[:query].inspect}.merge(options[:query] || {})\n"
     end
 
     method_src << "request :#{method}, path, options\n"
@@ -253,8 +259,8 @@ class RESTHome
   # Parse an array of Set-cookie headers
   def save_cookies(data)
     @cookies ||= {}
-    data.collect { |cookie| cookie.split("\; ")[0].split('=') }.each do |c|
-      @cookies[c[0]] = c[1]
+    data.delete_if{ |c| c.blank? }.collect { |cookie| parts = cookie.split("\; "); parts[0] ? parts[0].split('=') : nil }.each do |c|
+      @cookies[c[0].strip] = c[1].strip if c && c[0] && c[1]
     end
   end
 

@@ -3,26 +3,23 @@ require 'resthome'
 class LastFmWebService < RESTHome
   base_uri 'http://ws.audioscrobbler.com'
 
-  route :find_albums, '/2.0/', :query => {'method' => 'library.getalbums'}, :resource => 'albums'
-  # find_albums_by_user
+  namespace '/2.0' do
+    route :user_neighbors, '/', :query => {'method' => 'user.getneighbours', 'user' => :arg1} do |res|
+      res['neighbours']['user']
+    end
 
-  route :find_neighbors, '/2.0/', :query => {'method' => 'user.getneighbours'} do |res|
-    res['neighbours']['user']
+    route :track, '/', :query => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}, :resource => 'track'
+
+    route :user_albums, '/', :query => {'method' => 'library.getalbums', 'user' => :arg1}, :resource => 'albums'
+
+    route :user_top_albums, '/', :query => {'method' => 'user.gettopalbums', 'user' => :arg1} do |res|
+      res['topalbums']['album']
+    end
+
+    route :user_top_tracks, '/', :query => {'method' => 'user.gettoptracks', 'user' => :arg1} do |res|
+      res['toptracks']['track']
+    end
   end
-  # find_neighbors_by_user
-
-  route :find_top_tracks, '/2.0/', :query => {'method' => 'user.gettoptracks'} do |res|
-    res['track']['track']
-  end
-  # find_top_tracks_by_user
-
-  route :find_track, '/2.0/', :query => {'method' => 'track.getinfo'}, :resource => 'track'
-  # find_track_by_artist_and_track
-
-  route :find_top_albums, '/2.0/', :query => {'method' => 'user.gettopalbums'} do |res|
-    res['topalbums']['album']
-  end
-  # find_top_albums_by_user
 
   def initialize(api_key)
     @api_key = api_key

@@ -43,6 +43,19 @@ class RESTHome
     path = "#{@path_prefix.join if @path_prefix}#{path}"
     function_args = args.collect{ |arg| arg[1..-1] }
 
+    query_args = []
+    if options[:query]
+      options[:query].each do |n, v|
+        next unless v.is_a?(Symbol)
+        idx = v.to_s.gsub(/[^\d]/, '').to_i
+        query_args[idx] = n.to_s
+        options[:query].delete n
+      end
+      query_args.compact!
+    end
+
+    function_args += query_args
+
     method = options[:method]
     expected_status = options[:expected_status]
     if method.nil?
@@ -80,7 +93,7 @@ class RESTHome
     METHOD
 
     args.each_with_index do |arg, idx|
-      method_src << "path.sub! '#{arg}', #{function_args[idx]}.to_s\n"
+      method_src << "path.sub! '#{arg}', URI.escape(#{function_args[idx]}.to_s)\n"
     end
 
     if options[:no_body].nil?
@@ -95,6 +108,13 @@ class RESTHome
 
     if options[:query]
       method_src << "options[:query] = #{options[:query].inspect}.merge(options[:query] || {})\n"
+    elsif query_args.size > 0
+      method_src << "options[:query] ||= {}\n"
+    end
+
+    query_args.each_with_index do |arg, idx|
+      idx += args.size
+      method_src << "options[:query]['#{arg}'] = #{function_args[idx]}\n"
     end
 
     method_src << "request :#{method}, path, options\n"

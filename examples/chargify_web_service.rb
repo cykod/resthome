@@ -50,4 +50,6 @@ class ChargifyWebService < RESTHome
     super
     options[:body] = options[:body].to_json if options[:body]
   end
+
+  def parse_response!; end
 end

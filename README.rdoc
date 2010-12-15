@@ -48,13 +48,9 @@ Create a simple lorem lipsum generator, using http://www.lipsum.com.
 
 
  class LoremLipsumService < RESTHome
-   route :generate, '/feed/json', :method => :post, :return => :parse_feed
+   base_uri 'http://www.lipsum.com'
 
-   def initialize
-     self.base_uri = 'http://www.lipsum.com'
-   end
-
-   def parse_feed(res)
+   route :generate, '/feed/json', :method => :post do |res|
      res['feed']['lipsum']
    end
  end
@@ -62,6 +58,30 @@ Create a simple lorem lipsum generator, using http://www.lipsum.com.
  service = LoremLipsumService.new
  words = service.generate(:what => 'words', :amount => 20)
 
+== LastFM Example query arguments
+
+How to use replace query parameters with function arguments.
+
+  class LastFmWebService < RESTHome
+    base_uri 'http://ws.audioscrobbler.com'
+
+    namespace '/2.0' do
+      route :track, '/', :query => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}, :resource => 'track'
+    end
+
+    def initialize(api_key)
+      @api_key = api_key
+    end
+  
+    def build_options!(options)
+      options[:query] ||= {}
+      options[:query]['format'] = 'json'
+      options[:query]['api_key'] = @api_key
+    end
+  end
+
+  service = LastFmWebService.new 'xxxxxxxxx'
+  service.track 'cher', 'believe'
 
 == Contributing to RESTHome
  

@@ -456,4 +456,21 @@ describe RESTHome do
     @service.request_method.should == :get
     @service.request_url.should == 'http://test.dev/tracks.json'
   end
+
+  it "should support query arguments" do
+    @service_class.class_eval do
+      base_uri 'http://test.dev'
+      route :tracks, '/:version/', :query => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}
+    end
+    @service = @service_class.new
+
+    fakeweb_response(:get, %r|http://test.dev/2.0/|, 200, [])
+    @service.tracks '2.0', 'cher', 'believe'
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/2.0/'
+    @service.request_options[:query]['method'].should == 'track.getinfo'
+    @service.request_options[:query]['artist'].should == 'cher'
+    @service.request_options[:query]['track'].should == 'believe'
+  end
 end

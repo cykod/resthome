@@ -40,7 +40,7 @@ class RESTHome
   #   Default set of query arguments
   def self.route(name, path, options={}, &block)
     args = path.scan /:[a-z_]+/
-    path = "#{@path_prefix}#{path}"
+    path = "#{@path_prefix.join if @path_prefix}#{path}"
     function_args = args.collect{ |arg| arg[1..-1] }
 
     method = options[:method]
@@ -143,8 +143,10 @@ class RESTHome
   end
 
   def self.namespace(path_prefix)
-    @path_prefix = path_prefix
+    @path_prefix ||= []
+    @path_prefix.push path_prefix
     yield
+    @path_prefix.pop
   end
 
   # Creates routes for a RESTful API
@@ -186,7 +188,7 @@ class RESTHome
 
   # Creates the url
   def build_url(path)
-    "#{self.base_uri}#{path}"
+    "#{self.base_uri || self.class.base_uri}#{path}"
   end
 
   # Adds the basic_auth and cookie options

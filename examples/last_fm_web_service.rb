@@ -1,6 +1,8 @@
 require 'resthome'
 
 class LastFmWebService < RESTHome
+  base_uri 'http://ws.audioscrobbler.com'
+
   route :find_albums, '/2.0/', :query => {'method' => 'library.getalbums'}, :resource => 'albums'
   # find_albums_by_user
 
@@ -24,7 +26,6 @@ class LastFmWebService < RESTHome
 
   def initialize(api_key)
     @api_key = api_key
-    self.base_uri = "http://ws.audioscrobbler.com"
   end
   
   def build_options!(options)

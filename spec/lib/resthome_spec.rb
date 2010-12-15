@@ -407,14 +407,22 @@ describe RESTHome do
 
   it "namespaces for convenience" do
     @service_class.class_eval do
+      base_uri 'http://test.dev'
+
       namespace '/users/1' do
         route :find_songs,  '/songs.json'
         route :find_albums, '/albums.json'
+        namespace '/videos' do
+          route :find_videos, '/search.json'
+        end
+        route :find_tracks, '/tracks.json'
       end
+      route :tracks, '/tracks.json'
     end
 
     @service_class.method_defined?(:find_songs).should be_true
     @service_class.method_defined?(:find_albums).should be_true
+    @service_class.method_defined?(:tracks).should be_true
 
     @service = @service_class.new
 
@@ -429,5 +437,23 @@ describe RESTHome do
 
     @service.request_method.should == :get
     @service.request_url.should == 'http://test.dev/users/1/albums.json'
+
+    fakeweb_response(:get, 'http://test.dev/users/1/tracks.json', 200, [])
+    @service.find_tracks
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/users/1/tracks.json'
+
+    fakeweb_response(:get, 'http://test.dev/users/1/videos/search.json', 200, [])
+    @service.find_videos
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/users/1/videos/search.json'
+
+    fakeweb_response(:get, 'http://test.dev/tracks.json', 200, [])
+    @service.tracks
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/tracks.json'
   end
 end

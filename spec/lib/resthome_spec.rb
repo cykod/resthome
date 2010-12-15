@@ -404,4 +404,30 @@ describe RESTHome do
     @service.request_url.should == 'http://test.dev/songs.json'
     @service.request_options.should == {:query => {'search' => 'test2'}}
   end
+
+  it "namespaces for convenience" do
+    @service_class.class_eval do
+      namespace '/users/1' do
+        route :find_songs,  '/songs.json'
+        route :find_albums, '/albums.json'
+      end
+    end
+
+    @service_class.method_defined?(:find_songs).should be_true
+    @service_class.method_defined?(:find_albums).should be_true
+
+    @service = @service_class.new
+
+    fakeweb_response(:get, 'http://test.dev/users/1/songs.json', 200, [])
+    @service.find_songs
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/users/1/songs.json'
+
+    fakeweb_response(:get, 'http://test.dev/users/1/albums.json', 200, [])
+    @service.find_albums
+
+    @service.request_method.should == :get
+    @service.request_url.should == 'http://test.dev/users/1/albums.json'
+  end
 end

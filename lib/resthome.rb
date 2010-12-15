@@ -40,6 +40,7 @@ class RESTHome
   #   Default set of query arguments
   def self.route(name, path, options={}, &block)
     args = path.scan /:[a-z_]+/
+    path = "#{@path_prefix}#{path}"
     function_args = args.collect{ |arg| arg[1..-1] }
 
     method = options[:method]
@@ -139,6 +140,11 @@ class RESTHome
   # Adds a route to the current object
   def route(name, path, options={})
     self.class.route name, path, options.merge(:instance => self)
+  end
+
+  def self.namespace(path_prefix)
+    @path_prefix = path_prefix
+    yield
   end
 
   # Creates routes for a RESTful API

@@ -83,6 +83,10 @@ How to use replace query parameters with function arguments.
   service = LastFmWebService.new 'xxxxxxxxx'
   service.track 'cher', 'believe'
 
+== Twilio Example send SMS message
+
+TwilioWebService.service.send_sms_message '5551112222', 'Verification Code: 2121'
+
 == Contributing to RESTHome
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet

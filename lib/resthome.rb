@@ -54,7 +54,7 @@ class RESTHome
       query_args.compact!
     end
 
-    function_args += query_args
+    function_args += query_args.map { |a| a.downcase.gsub(/[^a-z0-9_]/, '_').sub(/^\d+/, '') }
 
     method = options[:method]
     expected_status = options[:expected_status]

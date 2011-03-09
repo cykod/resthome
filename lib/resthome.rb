@@ -38,22 +38,17 @@ class RESTHome
   #   Removes the body argument from a post/put route
   # [:query]
   #   Default set of query arguments
+  # [:body]
+  #   Default set of body arguments
   def self.route(name, path, options={}, &block)
     args = path.scan /:[a-z_]+/
     path = "#{@path_prefix.join if @path_prefix}#{path}"
     function_args = args.collect{ |arg| arg[1..-1] }
 
-    query_args = []
-    if options[:query]
-      options[:query].each do |n, v|
-        next unless v.is_a?(Symbol)
-        idx = v.to_s.gsub(/[^\d]/, '').to_i
-        query_args[idx] = n.to_s
-        options[:query].delete n
-      end
-      query_args.compact!
-    end
+    body_args = get_function_args options, :body
+    function_args += body_args.map { |a| a.downcase.gsub(/[^a-z0-9_]/, '_').sub(/^\d+/, '') }
 
+    query_args = get_function_args options, :query
     function_args += query_args.map { |a| a.downcase.gsub(/[^a-z0-9_]/, '_').sub(/^\d+/, '') }
 
     method = options[:method]
@@ -96,10 +91,18 @@ class RESTHome
       method_src << "path.sub! '#{arg}', URI.escape(#{function_args[idx]}.to_s)\n"
     end
 
-    if options[:no_body].nil?
+    if options[:no_body]
+      if options[:body]
+        method_src << "options[:body] = #{options[:body].inspect}.merge(options[:body] || {})\n"
+      elsif body_args.size > 0
+        method_src << "options[:body] ||= {}\n"
+      end
+    else
       if method == 'post' || method == 'put'
         if options[:resource]
           method_src << "options[:body] = {'#{options[:resource].to_s}' => body}\n"
+        elsif options[:body]
+          method_src << "options[:body] = #{options[:body].inspect}.merge(body || {})\n"
         else
           method_src << "options[:body] = body\n"
         end
@@ -112,8 +115,13 @@ class RESTHome
       method_src << "options[:query] ||= {}\n"
     end
 
-    query_args.each_with_index do |arg, idx|
+    body_args.each_with_index do |arg, idx|
       idx += args.size
+      method_src << "options[:body]['#{arg}'] = #{function_args[idx]}\n"
+    end
+
+    query_args.each_with_index do |arg, idx|
+      idx += body_args.size + args.size
       method_src << "options[:query]['#{arg}'] = #{function_args[idx]}\n"
     end
 
@@ -337,5 +345,21 @@ class RESTHome
     end
     obj = yield(obj) if block_given?
     obj
+  end
+
+  private
+
+  def self.get_function_args(options, fld)
+    args = []
+    if options[fld]
+      options[fld].each do |n, v|
+        next unless v.is_a?(Symbol)
+        idx = v.to_s.gsub(/[^\d]/, '').to_i
+        args[idx] = n.to_s
+        options[fld].delete n
+      end
+      args.compact!
+    end
+    args
   end
 end

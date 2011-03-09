@@ -60,7 +60,7 @@ Create a simple lorem lipsum generator, using http://www.lipsum.com.
 
 == LastFM Example query arguments
 
-How to use replace query parameters with function arguments.
+How to replace query parameters with function arguments.
 
   class LastFmWebService < RESTHome
     base_uri 'http://ws.audioscrobbler.com'
@@ -86,6 +86,42 @@ How to use replace query parameters with function arguments.
 == Twilio Example send SMS message
 
 TwilioWebService.service.send_sms_message '5551112222', 'Verification Code: 2121'
+
+== Amazon Simple Email Service (SES)
+
+How to replace body parameters with function arguments.
+
+  require 'digest/sha2'
+  require 'base64'
+
+  class AmazonSESService < RESTHome
+    base_uri 'https://email.us-east-1.amazonaws.com'
+    
+    @@digest256 = OpenSSL::Digest::Digest.new("sha256")
+  
+    route :verify_email_address, '/', :body => {'Action' => 'VerifyEmailAddress', 'EmailAddress' => :arg1}, :method => :post, :expected_status => 200, :no_body => true do |res|
+      res['VerifyEmailAddressResponse']
+    end
+  
+    def initialize(access_key, secret)
+      @access_key = access_key
+      @secret = secret
+    end
+  
+    def build_options!(options)
+      date = Time.now.getutc.httpdate
+      options[:headers] ||= {}
+      options[:headers]['Date'] = date
+      options[:headers]['X-Amzn-Authorization'] = "AWS3-HTTPS AWSAccessKeyId=#{@access_key},Algorithm=HMACSHA256,Signature=#{AmazonSESService.sign_request(@secret, date)}"
+    end
+  
+    def self.sign_request(secret, date)
+      Base64.encode64(OpenSSL::HMAC.digest(@@digest256, secret, date)).gsub("\n","")
+    end
+  end
+
+  service = AmazonSESService.new 'my-access-key', 'it-s-a-secret'
+  service.verify_email_address 'test@test.dev'
 
 == Contributing to RESTHome
  

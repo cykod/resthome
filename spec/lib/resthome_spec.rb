@@ -473,4 +473,55 @@ describe RESTHome do
     @service.request_options[:query]['artist'].should == 'cher'
     @service.request_options[:query]['track'].should == 'believe'
   end
+
+  it "should support body arguments" do
+    @service_class.class_eval do
+      base_uri 'http://test.dev'
+      route :tracks, '/:version/', :body => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}, :method => :post, :no_body => true
+    end
+    @service = @service_class.new
+
+    fakeweb_response(:post, %r|http://test.dev/2.0/|, 200, [])
+    @service.tracks '2.0', 'cher', 'believe'
+
+    @service.request_method.should == :post
+    @service.request_url.should == 'http://test.dev/2.0/'
+    @service.request_options[:body]['method'].should == 'track.getinfo'
+    @service.request_options[:body]['artist'].should == 'cher'
+    @service.request_options[:body]['track'].should == 'believe'
+  end
+
+  it "should support body arguments" do
+    @service_class.class_eval do
+      base_uri 'http://test.dev'
+      route :tracks, '/:version/', :body => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}, :method => :post
+    end
+    @service = @service_class.new
+
+    fakeweb_response(:post, %r|http://test.dev/2.0/|, 200, [])
+    @service.tracks '2.0', 'cher', 'believe', 'method' => 'track.getinfo2'
+
+    @service.request_method.should == :post
+    @service.request_url.should == 'http://test.dev/2.0/'
+    @service.request_options[:body]['method'].should == 'track.getinfo2'
+    @service.request_options[:body]['artist'].should == 'cher'
+    @service.request_options[:body]['track'].should == 'believe'
+  end
+
+  it "should support body and query arguments" do
+    @service_class.class_eval do
+      base_uri 'http://test.dev'
+      route :tracks, '/:version/', :body => {'method' => 'track.getinfo', 'artist' => :arg1, 'track' => :arg2}, :query => {'auth' => 'xx', 'Sign' => :arg1}, :method => :post
+    end
+    @service = @service_class.new
+
+    fakeweb_response(:post, 'http://test.dev/2.0/?auth=xx&Sign=secret', 200, [])
+    @service.tracks '2.0', 'cher', 'believe', 'secret', 'method' => 'track.getinfo2'
+
+    @service.request_method.should == :post
+    @service.request_url.should == 'http://test.dev/2.0/'
+    @service.request_options[:body]['method'].should == 'track.getinfo2'
+    @service.request_options[:body]['artist'].should == 'cher'
+    @service.request_options[:body]['track'].should == 'believe'
+  end
 end

@@ -39,13 +39,13 @@ class AmazonSESService < RESTHome
     res['SendEmailResponse']
   end
 
-  route :send_raw_email, '/', :body => {'Action' => 'SendRawEmail', 'RawMessage' => :arg1}, :method => :post, :expected_status => 200, :no_body => true do |res|
+  route :send_raw_email, '/', :body => {'Action' => 'SendRawEmail', 'RawMessage.Data' => :arg1}, :method => :post, :expected_status => 200, :no_body => true do |res|
     res['SendRawEmailResponse']
   end
 
-  def initialize(access_key, secret)
-    @access_key = access_key
-    @secret = secret
+  def initialize(options={})
+    @access_key = options[:access_key_id]
+    @secret = options[:secret_access_key]
   end
 
   def build_options!(options)
@@ -63,4 +63,12 @@ class AmazonSESService < RESTHome
   def error_response
     @error_response ||= HTTParty::Parser.call self.response.body, HTTParty::Parser.format_from_mimetype(self.response.headers['content-type'])
   end
+
+  def deliver(mail)
+    message = mail.is_a?(Hash) ? Mail.new(mail).to_s : mail.to_s
+    message = Base64.encode64 message
+    self.send_raw_email message
+  end
+
+  alias :deliver! :deliver
 end

@@ -89,7 +89,7 @@ TwilioWebService.service.send_sms_message '5551112222', 'Verification Code: 2121
 
 == Amazon Simple Email Service (SES)
 
-How to replace body parameters with function arguments.
+How to replace body parameters with function arguments. Complete Amazon SES model in examples folder.
 
   require 'digest/sha2'
   require 'base64'
@@ -120,7 +120,7 @@ How to replace body parameters with function arguments.
     end
   end
 
-  service = AmazonSESService.new 'my-access-key', 'it-s-a-secret'
+  service = AmazonSESService.new :access_key_id => 'my-access-key', :secret_access_key => 'it-s-a-secret'
   service.verify_email_address 'test@test.dev'
 
 == Contributing to RESTHome

@@ -524,4 +524,23 @@ describe RESTHome do
     @service.request_options[:body]['artist'].should == 'cher'
     @service.request_options[:body]['track'].should == 'believe'
   end
+
+  it "should set the expected status based on the method" do
+    @service_class.class_eval do
+      base_uri 'http://test.dev'
+      route :test, '/test', :method => :post, :no_body => true
+    end
+    @service = @service_class.new
+
+    fakeweb_response(:post, 'http://test.dev/test', 200, [])
+    @service.test
+
+    fakeweb_response(:post, 'http://test.dev/test', 201, [])
+    @service.test
+
+    fakeweb_response(:post, 'http://test.dev/test', 202, [])
+    expect {
+      @service.test
+    }.to raise_error { RESTHome::InvalidResponse }
+  end
 end

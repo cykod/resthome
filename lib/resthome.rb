@@ -52,33 +52,38 @@ class RESTHome
     function_args += query_args.map { |a| a.downcase.gsub(/[^a-z0-9_]/, '_').sub(/^\d+/, '') }
 
     method = options[:method]
-    expected_status = options[:expected_status]
     if method.nil?
       if name.to_s =~ /^(create|add|edit|update|delete)_/
         case $1
         when 'create'
           method = 'post'
-          expected_status ||= [200, 201]
         when 'add'
           method = 'post'
-          expected_status ||= [200, 201]
         when 'edit'
           method = 'put'
-          expected_status ||= 200
         when 'update'
           method = 'put'
-          expected_status ||= 200
         when 'delete'
           method = 'delete'
-          expected_status ||= [200, 204]
         end
       else
         method = 'get'
+      end
+    end
+    method = method.to_s
+
+    expected_status = options[:expected_status]
+    if expected_status.nil?
+      case method
+      when 'post'
+        expected_status ||= [200, 201]
+      when 'delete'
+        expected_status ||= [200, 204]
+      else
         expected_status ||= 200
       end
     end
 
-    method = method.to_s
     function_args << 'body' if (method == 'post' || method == 'put') && options[:no_body].nil?
     function_args << 'options={}, &block'
 
